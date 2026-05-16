@@ -27,8 +27,17 @@ Substance rules:
 
 Alternatives rules (CRITICAL):
 - Suggest exactly 3 alternatives that are CURRENT (still actively used as of 2026) and that compete with this product in the buyer's use case.
-- For AI coding tools think: Claude Code, GitHub Copilot, Gemini Code Assist, Windsurf, Continue, Codeium. NOT Kite (discontinued) or other dated names.
-- Each alternative MUST include a real official product URL (https://). If you are not certain of the exact URL, use the company's official root domain.
+- For AI coding tools think: Claude Code, GitHub Copilot, Gemini Code Assist, Windsurf, Continue, Codeium — NOT discontinued products (e.g. Kite).
+- Each alternative MUST include a real HTTPS URL on the vendor's domain. Prefer these when applicable:
+  - GitHub Copilot → https://github.com/features/copilot
+  - Claude Code → https://www.anthropic.com/claude-code
+  - Cursor → https://cursor.com
+  - Windsurf → https://windsurf.com
+  - Gemini (consumer) → https://gemini.google.com
+  - Gemini Code Assist → https://cloud.google.com/products/gemini/code-assist
+  - Continue → https://www.continue.dev
+  - Codeium → https://codeium.com
+- If you truly cannot find a URL, output "url": "" and the system will resolve it from the product name — but prefer filling the correct link yourself.
 - "positioning" is one short sentence explaining the trade-off vs the product under review.
 
 Output strict JSON, no markdown, no prose outside the JSON.`;

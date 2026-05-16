@@ -14,6 +14,7 @@ import { openaiJSON } from "@/lib/providers/openai";
 import { mockReport } from "@/lib/mockReport";
 import { detectProviders } from "@/lib/providers/env";
 import type { Emitter } from "@/lib/stream";
+import { resolveOfficialProductUrl } from "@/lib/alternativeUrls";
 
 /**
  * Organizational Decision Agent.
@@ -136,23 +137,16 @@ export async function runOrganizationalDecisionAgent(
 }
 
 /**
- * Guarantee every alternative has a usable URL. If the model omitted one or
- * returned a malformed entry, fall back to a Google search for the name so the
- * user always has a working link to investigate further.
+ * Every alternative row gets a working https URL: keep model URLs when they
+ * look like real vendor links; otherwise resolve via catalog / search.
  */
 function ensureLinkedAlternatives<
   T extends { name: string; url?: string; positioning: string }
 >(items: T[]): T[] {
-  return items.map((a) => {
-    const cleaned = (a.url || "").trim();
-    const valid = cleaned && /^https?:\/\//i.test(cleaned);
-    return {
-      ...a,
-      url: valid
-        ? cleaned
-        : `https://www.google.com/search?q=${encodeURIComponent(a.name)}`,
-    };
-  });
+  return items.map((a) => ({
+    ...a,
+    url: resolveOfficialProductUrl(a.name, a.url),
+  }));
 }
 
 function mergeUrl<T extends { url: string }>(a: T[], b: T[]): T[] {

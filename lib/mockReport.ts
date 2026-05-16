@@ -1,4 +1,5 @@
 import type { AnalyzeInput, ProductlyReport, ResearchFindings } from "@/types/report";
+import { resolveOfficialProductUrl } from "@/lib/alternativeUrls";
 
 export function mockResearch(input: AnalyzeInput): ResearchFindings {
   const name = input.productName || "the product";
@@ -31,8 +32,16 @@ export function mockResearch(input: AnalyzeInput): ResearchFindings {
       "Edge-case reliability during peak load",
     ],
     alternatives: [
-      { name: "Established Incumbent", positioning: "Lower velocity, stronger enterprise controls." },
-      { name: "Open-source Equivalent", positioning: "Free and self-hosted; team owns the maintenance burden." },
+      {
+        name: "GitHub Copilot",
+        positioning: "Tight GitHub-native integration; mature enterprise procurement path.",
+        url: resolveOfficialProductUrl("GitHub Copilot"),
+      },
+      {
+        name: "Claude Code",
+        positioning: "Terminal/agent-style workflow; compare governance and team rollout patterns.",
+        url: resolveOfficialProductUrl("Claude Code"),
+      },
     ],
     sources: [
       { title: `${name} — Website`, url: input.productUrl || "https://example.com", type: "website" },
@@ -136,19 +145,22 @@ export function mockReport(input: AnalyzeInput): ProductlyReport {
 
     alternatives: [
       {
-        name: "Established Incumbent",
-        url: `https://www.google.com/search?q=${encodeURIComponent(name + " enterprise alternative")}`,
-        positioning: "Lower velocity, stronger enterprise controls and procurement comfort.",
+        name: "GitHub Copilot",
+        positioning:
+          "Native GitHub integration; predictable procurement story for engineering-heavy orgs.",
+        url: resolveOfficialProductUrl("GitHub Copilot"),
       },
       {
-        name: "Open-source Equivalent",
-        url: `https://www.google.com/search?q=${encodeURIComponent(name + " open source alternative")}`,
-        positioning: "Free and self-hosted; the team owns maintenance instead of license cost.",
+        name: "Claude Code",
+        positioning:
+          "CLI/agent-centric adoption path; compare rollout if teams already use terminal-first workflows.",
+        url: resolveOfficialProductUrl("Claude Code"),
       },
       {
-        name: "Adjacent Workflow Tool",
-        url: `https://www.google.com/search?q=${encodeURIComponent(name + " alternative")}`,
-        positioning: "Solves a neighbouring problem with less workflow dependency.",
+        name: "Windsurf",
+        positioning:
+          "AI-first IDE alternative; validate governance and cost curves if teams want vendor IDE consolidation.",
+        url: resolveOfficialProductUrl("Windsurf"),
       },
     ],
 
