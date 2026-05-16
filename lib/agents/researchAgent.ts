@@ -15,6 +15,12 @@ import {
   buildResearchUser,
 } from "@/lib/prompts/researchExtract";
 import type { Emitter } from "@/lib/stream";
+import { mapLimit } from "@/lib/async";
+
+/** Cap parallel Web Unlocker calls — Bright Data tolerates concurrency; avoids piling up 6+ minute tails. */
+const FETCH_CONCURRENCY = 4;
+/** Fewer pages = faster end-to-end; coverage stays broad via parallel SERP. */
+const MAX_SCRAPE_URLS = 5;
 
 export type ResearchResult = {
   findings: ResearchFindings;
@@ -46,56 +52,7 @@ export async function runMarketIntelligenceAgent(
   const scraped: { source: string; text: string }[] = [];
   const discoveredSources: SourceLink[] = [];
 
-  // ---- 1. Bright Data: targeted SERP + page fetches -------------------------
-  if (cfg.brightData) {
-    emit.progress(
-      10,
-      `Searching the open web for ${input.productName} across Reddit, G2, Hacker News, docs, and pricing`,
-      "search"
-    );
-    const serp = await brightDataTargetedResearch(
-      input.productName,
-      input.productUrl
-    );
-
-    if (serp.length > 0) {
-      emit.progress(
-        18,
-        `Found ${serp.length} candidate sources — selecting most authoritative`,
-        "search"
-      );
-
-      const picked = selectUrls(serp, input.productUrl, input.productName);
-
-      const total = picked.length;
-      for (let i = 0; i < total; i++) {
-        const url = picked[i];
-        const pct = 18 + Math.round(((i + 1) / total) * 30);
-        emit.progress(pct, `Extracting from ${shortUrl(url)}`, "extract");
-        const text = await brightDataFetch(url);
-        if (text && text.length > 200) {
-          const type = inferType(url);
-          scraped.push({ source: `${type}: ${shortUrl(url)}`, text });
-          const link: SourceLink = { title: shortUrl(url), url, type };
-          discoveredSources.push(link);
-          emit.source(link);
-        }
-      }
-    }
-  }
-
-  // ---- 2. Perplexity: grounded community + review research ------------------
-  if (cfg.perplexity) {
-    emit.progress(
-      52,
-      `Cross-referencing community sentiment via Perplexity`,
-      "perplexity"
-    );
-  }
-
-  const perplexity = cfg.perplexity
-    ? await perplexitySearch({
-        prompt: `Investigate "${input.productName}" (${input.productUrl ?? ""}) as a software adoption decision for a ${input.teamType} ${input.useCase} team.
+  const perplexityPrompt = `Investigate "${input.productName}" (${input.productUrl ?? ""}) as a software adoption decision for a ${input.teamType} ${input.useCase} team.
 
 Summarize what real users say across Reddit, Hacker News, G2, Capterra, and the product's own community channels. Focus on:
 - recurring positive themes (be specific, quote phrasing where possible)
@@ -105,9 +62,29 @@ Summarize what real users say across Reddit, Hacker News, G2, Capterra, and the 
 - workflow dependency and switching cost
 - 2-3 credible alternatives with one-line positioning
 
-Cite specific URLs. Prefer Reddit, G2, HN over generic listicles.`,
-      })
-    : null;
+Cite specific URLs. Prefer Reddit, G2, HN over generic listicles.`;
+
+  // ---- 1. Bright Data SERP + Perplexity in parallel (biggest wall-clock win) -----
+  if (cfg.brightData || cfg.perplexity) {
+    emit.progress(
+      10,
+      cfg.brightData && cfg.perplexity
+        ? `Running Google SERP + Perplexity in parallel for ${input.productName}`
+        : cfg.brightData
+          ? `Searching the open web for ${input.productName}`
+          : `Cross-referencing community sentiment via Perplexity`,
+      "search"
+    );
+  }
+
+  const [serp, perplexity] = await Promise.all([
+    cfg.brightData
+      ? brightDataTargetedResearch(input.productName, input.productUrl)
+      : Promise.resolve([]),
+    cfg.perplexity
+      ? perplexitySearch({ prompt: perplexityPrompt })
+      : Promise.resolve(null),
+  ]);
 
   if (perplexity) {
     for (const c of perplexity.citations.slice(0, 10)) {
@@ -121,6 +98,36 @@ Cite specific URLs. Prefer Reddit, G2, HN over generic listicles.`,
         emit.source(link);
       }
     }
+  }
+
+  // ---- 2. Web Unlocker: fetch selected URLs with bounded concurrency ------------
+  if (cfg.brightData && serp.length > 0) {
+    emit.progress(
+      28,
+      `Found ${serp.length} SERP candidates — extracting up to ${MAX_SCRAPE_URLS} pages`,
+      "search"
+    );
+
+    const picked = selectUrls(serp, input.productUrl, input.productName);
+    let done = 0;
+
+    await mapLimit(picked, FETCH_CONCURRENCY, async (url) => {
+      const text = await brightDataFetch(url);
+      done++;
+      const denom = Math.max(picked.length, 1);
+      emit.progress(
+        28 + Math.round((done / denom) * 28),
+        `Extracted ${done}/${picked.length}: ${shortUrl(url)}`,
+        "extract"
+      );
+      if (text && text.length > 200) {
+        const type = inferType(url);
+        scraped.push({ source: `${type}: ${shortUrl(url)}`, text });
+        const link: SourceLink = { title: shortUrl(url), url, type };
+        discoveredSources.push(link);
+        emit.source(link);
+      }
+    });
   }
 
   // ---- 3. OpenAI: structured extraction into ResearchFindings ---------------
@@ -203,11 +210,15 @@ function selectUrls(
 
   for (const r of serp) {
     if (!r.url) continue;
-    if (r.url.includes("pricing") && picked.size < 5) picked.add(r.url);
-    if (r.url.includes("/docs") && picked.size < 6) picked.add(r.url);
-    if (r.url.includes("/security") && picked.size < 7) picked.add(r.url);
+    if (picked.size >= MAX_SCRAPE_URLS) break;
+    if (r.url.includes("pricing")) picked.add(r.url);
+    if (picked.size >= MAX_SCRAPE_URLS) break;
+    if (r.url.includes("/docs")) picked.add(r.url);
+    if (picked.size >= MAX_SCRAPE_URLS) break;
+    if (r.url.includes("/security")) picked.add(r.url);
 
     for (const host of Object.keys(hostBuckets)) {
+      if (picked.size >= MAX_SCRAPE_URLS) break;
       if (r.url.includes(host) && hostBuckets[host] < 1) {
         picked.add(r.url);
         hostBuckets[host]++;
@@ -218,6 +229,7 @@ function selectUrls(
 
   if (picked.size < 4) {
     for (const r of serp) {
+      if (picked.size >= MAX_SCRAPE_URLS) break;
       if (!r.url) continue;
       if (
         productName &&
@@ -225,11 +237,10 @@ function selectUrls(
       ) {
         picked.add(r.url);
       }
-      if (picked.size >= 6) break;
     }
   }
 
-  return Array.from(picked).slice(0, 6);
+  return Array.from(picked).slice(0, MAX_SCRAPE_URLS);
 }
 
 function inferType(url: string): SourceLink["type"] {

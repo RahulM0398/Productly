@@ -41,7 +41,7 @@ function parseSerp(text: string): SerpResult[] {
     const json = JSON.parse(text);
     const organic = json?.organic || json?.results || [];
     if (Array.isArray(organic)) {
-      return organic.slice(0, 10).map((r: { title?: string; link?: string; url?: string; description?: string; snippet?: string }) => ({
+      return organic.slice(0, 8).map((r: { title?: string; link?: string; url?: string; description?: string; snippet?: string }) => ({
         title: r.title || r.link || r.url || "",
         url: r.link || r.url || "",
         snippet: r.description || r.snippet,
@@ -71,9 +71,10 @@ export async function brightDataTargetedResearch(
     `${productName} alternatives`,
   ].filter((q) => q.length > 0 && !q.endsWith("site:"));
 
+  // All SERP queries hit Bright Data independently — run in parallel (was 6× sequential).
+  const batches = await Promise.all(queries.map((q) => brightDataSerp(q)));
   const all: SerpResult[] = [];
-  for (const q of queries) {
-    const res = await brightDataSerp(q);
+  for (const res of batches) {
     if (res) all.push(...res);
   }
   // dedupe by url
@@ -125,7 +126,8 @@ export async function brightDataFetch(url: string): Promise<string | null> {
       return null;
     }
     const text = await res.text();
-    return stripHtml(text).slice(0, 8000);
+    // Smaller slice = faster downstream OpenAI extraction; 5k chars is enough signal.
+    return stripHtml(text).slice(0, 5000);
   } catch (err) {
     console.warn("[brightdata-fetch] error", err);
     return null;

@@ -43,13 +43,14 @@ export function buildResearchUser(input: {
     parts.push("--- Scraped material (Bright Data Web Unlocker) ---");
     for (const s of input.scraped) {
       parts.push(`# ${s.source}`);
-      parts.push(s.text.slice(0, 3000));
+      // Trim per source keeps extraction quality high while reducing tokens/latency
+      parts.push(s.text.slice(0, 2200));
       parts.push("");
     }
   }
   if (input.perplexity) {
     parts.push("--- Web research (Perplexity, citation-grounded) ---");
-    parts.push(input.perplexity.text);
+    parts.push(input.perplexity.text.slice(0, 3500));
     parts.push("");
     parts.push("Citations:");
     for (const c of input.perplexity.citations) {
