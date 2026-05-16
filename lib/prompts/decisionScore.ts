@@ -26,19 +26,17 @@ Substance rules:
 - adoptionFailurePoints and longTermFrustrations must reference recognizable patterns from the research input (Reddit, G2, HN sentiment).
 
 Alternatives rules (CRITICAL):
-- Suggest exactly 3 alternatives that are CURRENT (still actively used as of 2026) and that compete with this product in the buyer's use case.
-- For AI coding tools think: Claude Code, GitHub Copilot, Gemini Code Assist, Windsurf, Continue, Codeium — NOT discontinued products (e.g. Kite).
-- Each alternative MUST include a real HTTPS URL on the vendor's domain. Prefer these when applicable:
+- Output exactly 3 entries. Each "name" MUST be a **real product proper noun** (e.g. "GitHub Copilot", "Linear", "Gong") — never abstract roles like "Established Incumbent", "Open-source Equivalent", "Adjacent Workflow Tool", or "Legacy vendor".
+- **Prefer** competitors named in the \`alternatives\` array inside the research JSON, or clearly discussed in the research text (same market as the subject). If research named concrete products, those should appear first.
+- If research named fewer than three, add **real, well-known substitutes in the SAME category** as the subject product for the buyer's stated team type and use case — still proper nouns only.
+- Never list the **subject product** (the product under review) as an alternative.
+- Each alternative MUST include a real HTTPS URL on the vendor's domain when you know it. Examples:
   - GitHub Copilot → https://github.com/features/copilot
   - Claude Code → https://www.anthropic.com/claude-code
   - Cursor → https://cursor.com
   - Windsurf → https://windsurf.com
-  - Gemini (consumer) → https://gemini.google.com
-  - Gemini Code Assist → https://cloud.google.com/products/gemini/code-assist
-  - Continue → https://www.continue.dev
-  - Codeium → https://codeium.com
-- If you truly cannot find a URL, output "url": "" and the system will resolve it from the product name — but prefer filling the correct link yourself.
-- "positioning" is one short sentence explaining the trade-off vs the product under review.
+- If unsure of URL, output "url": "" — the host app may resolve it from the name.
+- "positioning" is one short sentence: trade-off **vs the subject product** for this buyer (not generic marketing).
 
 Output strict JSON, no markdown, no prose outside the JSON.`;
 
@@ -104,6 +102,9 @@ export function buildDecisionUser(
   const parts: string[] = [];
   parts.push(`Product under review: ${input.productName}`);
   if (input.productUrl) parts.push(`URL: ${input.productUrl}`);
+  parts.push(
+    `Subject product — never list this name in "alternatives": ${input.productName}`
+  );
   parts.push(`Buyer context: ${input.teamType} ${input.useCase} team`);
   parts.push("");
   parts.push("Research findings (from Market Intelligence Agent):");

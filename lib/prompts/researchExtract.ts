@@ -7,6 +7,7 @@ Hard rules:
 - If a signal is not present in the input, write "unclear" rather than guessing.
 - Reddit, G2, and Hacker News fields must summarize what real users said in those exact sources. If a source produced no usable content, write "no usable signal found in this source".
 - Prefer specific phrases users actually used over generic language.
+- For "alternatives": include only **named competing products** that the scraped or Perplexity text **explicitly compares or mentions** (e.g. "vs GitHub Copilot", "switched to Windsurf"). Use real product names — never role labels like "incumbent vendor" or "open-source alternative". If no competitor is named anywhere in the input, set "alternatives" to [].
 - Output strict JSON, no markdown fences, no prose outside the JSON.`;
 
 export const RESEARCH_SCHEMA_HINT = `{
@@ -59,7 +60,7 @@ export function buildResearchUser(input: {
   }
   parts.push("");
   parts.push(
-    "Reduce the above to a ResearchFindings JSON. Populate redditFindings, g2Findings, and hackerNewsFindings strictly from the corresponding sources in the input. Include the most useful URLs in the sources array with accurate type tags."
+    "Reduce the above to a ResearchFindings JSON. Populate redditFindings, g2Findings, and hackerNewsFindings strictly from the corresponding sources in the input. For alternatives, only name products **actually referenced** in the scraped or Perplexity text; otherwise use []. Include the most useful URLs in the sources array with accurate type tags."
   );
   return parts.join("\n");
 }

@@ -1,5 +1,6 @@
 import type { AnalyzeInput, ProductlyReport, ResearchFindings } from "@/types/report";
 import { resolveOfficialProductUrl } from "@/lib/alternativeUrls";
+import { mergeAlternativesForReport } from "@/lib/competitorSuggestions";
 
 export function mockResearch(input: AnalyzeInput): ResearchFindings {
   const name = input.productName || "the product";
@@ -31,18 +32,11 @@ export function mockResearch(input: AnalyzeInput): ResearchFindings {
       "Onboarding non-technical users",
       "Edge-case reliability during peak load",
     ],
-    alternatives: [
-      {
-        name: "GitHub Copilot",
-        positioning: "Tight GitHub-native integration; mature enterprise procurement path.",
-        url: resolveOfficialProductUrl("GitHub Copilot"),
-      },
-      {
-        name: "Claude Code",
-        positioning: "Terminal/agent-style workflow; compare governance and team rollout patterns.",
-        url: resolveOfficialProductUrl("Claude Code"),
-      },
-    ],
+    alternatives: mergeAlternativesForReport(input, [], []).slice(0, 2).map((a) => ({
+      name: a.name,
+      positioning: a.positioning,
+      url: resolveOfficialProductUrl(a.name, a.url),
+    })),
     sources: [
       { title: `${name} — Website`, url: input.productUrl || "https://example.com", type: "website" },
     ],
@@ -143,26 +137,11 @@ export function mockReport(input: AnalyzeInput): ProductlyReport {
       ],
     },
 
-    alternatives: [
-      {
-        name: "GitHub Copilot",
-        positioning:
-          "Native GitHub integration; predictable procurement story for engineering-heavy orgs.",
-        url: resolveOfficialProductUrl("GitHub Copilot"),
-      },
-      {
-        name: "Claude Code",
-        positioning:
-          "CLI/agent-centric adoption path; compare rollout if teams already use terminal-first workflows.",
-        url: resolveOfficialProductUrl("Claude Code"),
-      },
-      {
-        name: "Windsurf",
-        positioning:
-          "AI-first IDE alternative; validate governance and cost curves if teams want vendor IDE consolidation.",
-        url: resolveOfficialProductUrl("Windsurf"),
-      },
-    ],
+    alternatives: mergeAlternativesForReport(input, [], []).map((a) => ({
+      name: a.name,
+      positioning: a.positioning,
+      url: resolveOfficialProductUrl(a.name, a.url),
+    })),
 
     sourceLinks: [
       { title: `${name} — Website`, url: input.productUrl || "https://example.com", type: "website" },

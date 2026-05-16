@@ -15,6 +15,7 @@ import { mockReport } from "@/lib/mockReport";
 import { detectProviders } from "@/lib/providers/env";
 import type { Emitter } from "@/lib/stream";
 import { resolveOfficialProductUrl } from "@/lib/alternativeUrls";
+import { mergeAlternativesForReport } from "@/lib/competitorSuggestions";
 
 /**
  * Organizational Decision Agent.
@@ -87,9 +88,7 @@ export async function runOrganizationalDecisionAgent(
     if (research.sources.length > 0) {
       fallback.sourceLinks = mergeUrl(fallback.sourceLinks, research.sources);
     }
-    if (research.alternatives.length > 0) {
-      fallback.alternatives = research.alternatives;
-    }
+    fallback.alternatives = finalizeAlternatives(input, research, []);
     return { report: fallback, reasoningProvider: "none" };
   }
 
@@ -114,8 +113,10 @@ export async function runOrganizationalDecisionAgent(
     workflowDependency: decision.workflowDependency,
     confidence: decision.confidence,
 
-    alternatives: ensureLinkedAlternatives(
-      decision.alternatives.length > 0 ? decision.alternatives : research.alternatives
+    alternatives: finalizeAlternatives(
+      input,
+      research,
+      decision.alternatives
     ),
     sourceLinks: research.sources,
 
@@ -137,9 +138,22 @@ export async function runOrganizationalDecisionAgent(
 }
 
 /**
- * Every alternative row gets a working https URL: keep model URLs when they
- * look like real vendor links; otherwise resolve via catalog / search.
+ * Merge research-backed names + model output; drop placeholders; pad with
+ * category-appropriate named competitors; resolve URLs.
  */
+function finalizeAlternatives(
+  input: AnalyzeInput,
+  research: ResearchFindings,
+  decisionAlts: DecisionSchema["alternatives"]
+): ProductlyReport["alternatives"] {
+  const merged = mergeAlternativesForReport(
+    input,
+    research.alternatives,
+    decisionAlts || []
+  );
+  return ensureLinkedAlternatives(merged) as ProductlyReport["alternatives"];
+}
+
 function ensureLinkedAlternatives<
   T extends { name: string; url?: string; positioning: string }
 >(items: T[]): T[] {
