@@ -137,7 +137,15 @@ export type AnalyzeInput = {
   useCase: string;
 };
 
-export const OPERATIONAL_LABELS: Record<keyof OperationalReadiness, string> = {
+/**
+ * Label maps for the dimension fields only — `overview` is rendered separately
+ * as the section overview, so it is intentionally excluded from these maps.
+ */
+export type OperationalDimensionKey = Exclude<keyof OperationalReadiness, "overview">;
+export type FinancialDimensionKey = Exclude<keyof FinancialSignals, "overview">;
+export type WorkflowDimensionKey = Exclude<keyof WorkflowDependency, "overview">;
+
+export const OPERATIONAL_LABELS: Record<OperationalDimensionKey, string> = {
   implementationComplexity: "Implementation Complexity",
   workflowDisruption: "Workflow Disruption Risk",
   trainingRequirements: "Training Requirements",
@@ -147,7 +155,7 @@ export const OPERATIONAL_LABELS: Record<keyof OperationalReadiness, string> = {
   scalability: "Scalability Signals",
 };
 
-export const FINANCIAL_LABELS: Record<keyof FinancialSignals, string> = {
+export const FINANCIAL_LABELS: Record<FinancialDimensionKey, string> = {
   pricingPredictability: "Pricing Predictability",
   scalingCostConcerns: "Scaling Cost Concerns",
   hiddenEnterprisePatterns: "Hidden Enterprise Pricing Patterns",
@@ -156,7 +164,7 @@ export const FINANCIAL_LABELS: Record<keyof FinancialSignals, string> = {
   overAdoptionRisk: "Over-Adoption Risk",
 };
 
-export const WORKFLOW_LABELS: Record<keyof WorkflowDependency, string> = {
+export const WORKFLOW_LABELS: Record<WorkflowDimensionKey, string> = {
   embeddingDepth: "Workflow Embedding Depth",
   migrationDifficulty: "Migration Difficulty",
   processDependency: "Process Dependency",
