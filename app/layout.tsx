@@ -21,9 +21,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Productly — Before you buy software, let agents investigate it.",
+  title: "Productly — Decision Intelligence for SaaS Adoption",
   description:
-    "Productly is an AI buying analyst for SaaS and AI products. Two agents investigate pricing, sentiment, switching risk, and trust to deliver a Buy, Trial, Watch, or Avoid recommendation.",
+    "A multi-agent decision engine that stress-tests SaaS adoption: Market Intelligence plus organizational fit, rollout risk, scaling signals, workflow dependency, and alternatives — before you commit your team.",
 };
 
 export default function RootLayout({

@@ -145,7 +145,7 @@ export type OperationalDimensionKey = Exclude<keyof OperationalReadiness, "overv
 export type FinancialDimensionKey = Exclude<keyof FinancialSignals, "overview">;
 export type WorkflowDimensionKey = Exclude<keyof WorkflowDependency, "overview">;
 
-export const OPERATIONAL_LABELS: Record<OperationalDimensionKey, string> = {
+export const OPERATIONAL_LABELS = {
   implementationComplexity: "Implementation Complexity",
   workflowDisruption: "Workflow Disruption Risk",
   trainingRequirements: "Training Requirements",
@@ -153,24 +153,24 @@ export const OPERATIONAL_LABELS: Record<OperationalDimensionKey, string> = {
   adminGovernance: "Admin & Governance Readiness",
   supportDocumentation: "Support & Documentation Quality",
   scalability: "Scalability Signals",
-};
+} as const satisfies Record<OperationalDimensionKey, string>;
 
-export const FINANCIAL_LABELS: Record<FinancialDimensionKey, string> = {
+export const FINANCIAL_LABELS = {
   pricingPredictability: "Pricing Predictability",
   scalingCostConcerns: "Scaling Cost Concerns",
   hiddenEnterprisePatterns: "Hidden Enterprise Pricing Patterns",
   roiLikelihood: "ROI Likelihood",
   seatExpansionRisk: "Seat Expansion Risk",
   overAdoptionRisk: "Over-Adoption Risk",
-};
+} as const satisfies Record<FinancialDimensionKey, string>;
 
-export const WORKFLOW_LABELS: Record<WorkflowDimensionKey, string> = {
+export const WORKFLOW_LABELS = {
   embeddingDepth: "Workflow Embedding Depth",
   migrationDifficulty: "Migration Difficulty",
   processDependency: "Process Dependency",
   knowledgeLockIn: "Knowledge Lock-in",
   integrationLockIn: "Integration Lock-in",
-};
+} as const satisfies Record<WorkflowDimensionKey, string>;
 
 export type StreamEvent =
   | { event: "progress"; data: { pct: number; label: string; phase: string } }
