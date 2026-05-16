@@ -32,7 +32,10 @@ async function runPipeline(input: AnalyzeInput, emit: Emitter) {
 
   try {
     wrapped.progress(2, "Productly opening run", "init");
-    const { findings, verifierNotes } = await runMarketIntelligenceAgent(input, wrapped);
+    const { findings, verifierNotes, researchMock } = await runMarketIntelligenceAgent(
+      input,
+      wrapped
+    );
     const { report: built, reasoningProvider } = await runOrganizationalDecisionAgent(
       input,
       findings,
@@ -41,6 +44,7 @@ async function runPipeline(input: AnalyzeInput, emit: Emitter) {
     );
 
     report = built;
+    const reasoningMock = reasoningProvider === "none";
     report.meta.providers = {
       brightData: providers.brightData,
       perplexity: providers.perplexity,
@@ -49,7 +53,9 @@ async function runPipeline(input: AnalyzeInput, emit: Emitter) {
       everOS: providers.everOS,
       agentField: providers.agentField,
     };
-    report.meta.degraded = reasoningProvider === "none";
+    report.meta.researchMock = researchMock;
+    report.meta.reasoningMock = reasoningMock;
+    report.meta.degraded = researchMock || reasoningMock;
 
     wrapped.progress(100, `Run complete: ${report.decision}`, "complete");
     emit.final(report);

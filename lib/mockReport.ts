@@ -173,6 +173,8 @@ export function mockReport(input: AnalyzeInput): ProductlyReport {
         agentField: false,
       },
       degraded: true,
+      researchMock: true,
+      reasoningMock: true,
     },
   };
 }

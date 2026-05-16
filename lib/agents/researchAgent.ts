@@ -25,6 +25,8 @@ const MAX_SCRAPE_URLS = 5;
 export type ResearchResult = {
   findings: ResearchFindings;
   verifierNotes?: string;
+  /** True when findings are from `mockResearch` (no successful live web → OpenAI extraction). */
+  researchMock: boolean;
 };
 
 /**
@@ -48,6 +50,20 @@ export async function runMarketIntelligenceAgent(
     `Market Intelligence Agent dispatched for ${input.productName}`,
     "init"
   );
+
+  if (!cfg.brightData && !cfg.perplexity) {
+    emit.progress(
+      8,
+      "No PERPLEXITY_API_KEY / BRIGHTDATA_API_KEY — live web search and page fetch are skipped",
+      "search"
+    );
+  } else if (!cfg.openai) {
+    emit.progress(
+      8,
+      "OPENAI_API_KEY missing — scraped or Perplexity text cannot be structured; research will use the template",
+      "extract"
+    );
+  }
 
   const scraped: { source: string; text: string }[] = [];
   const discoveredSources: SourceLink[] = [];
@@ -157,6 +173,7 @@ Cite specific URLs. Prefer Reddit, G2, HN over generic listicles.`;
     }
   }
 
+  const researchMock = !findings;
   if (!findings) {
     findings = mockResearch(input);
   }
@@ -190,7 +207,11 @@ Cite specific URLs. Prefer Reddit, G2, HN over generic listicles.`;
   }
 
   emit.progress(75, "Market intelligence complete", "intel-done");
-  return { findings, verifierNotes: verified?.verifierNotes };
+  return {
+    findings,
+    verifierNotes: verified?.verifierNotes,
+    researchMock,
+  };
 }
 
 function selectUrls(

@@ -111,6 +111,10 @@ export type ProductlyReport = {
       agentField: boolean;
     };
     degraded: boolean;
+    /** True when market intel used the template (`mockResearch`) — no OpenAI-structured live scrape/Perplexity text. */
+    researchMock?: boolean;
+    /** True when the decision layer used `mockReport` (no working reasoning provider). */
+    reasoningMock?: boolean;
   };
 };
 

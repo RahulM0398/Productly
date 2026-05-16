@@ -110,10 +110,33 @@ export default function Home() {
         {report && (
           <div className="mt-12 space-y-6">
             {report.meta.degraded && (
-              <div className="border border-ink px-5 py-3 mono-num text-[11px] flex items-center justify-between gap-4 bg-wash">
+              <div className="border border-ink px-5 py-3 mono-num text-[11px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-wash">
                 <span className="label-eyebrow shrink-0">Notice</span>
-                <span className="text-right">
-                  Reasoning provider unavailable — content below is from the mock fallback. Add a working reasoning key for a fully live decision.
+                <span className="text-right sm:max-w-[720px]">
+                  {report.meta.researchMock && (
+                    <>
+                      Market scan did not use live web extraction (needs{" "}
+                      <code className="mono-num text-[10px]">PERPLEXITY_API_KEY</code>
+                      {" and/or "}
+                      <code className="mono-num text-[10px]">BRIGHTDATA_API_KEY</code>
+                      {" plus "}
+                      <code className="mono-num text-[10px]">OPENAI_API_KEY</code>
+                      {" to structure findings). "}
+                    </>
+                  )}
+                  {report.meta.reasoningMock && (
+                    <>
+                      Decision layer is using the mock template (add a reasoning key:{" "}
+                      <code className="mono-num text-[10px]">QWEN_API_KEY</code>
+                      , <code className="mono-num text-[10px]">ZAI_API_KEY</code>
+                      , or set{" "}
+                      <code className="mono-num text-[10px]">REASONING_PROVIDER=openai</code>
+                      {" with "}
+                      <code className="mono-num text-[10px]">OPENAI_API_KEY</code>
+                      ).{" "}
+                    </>
+                  )}
+                  See <code className="mono-num text-[10px]">.env.local.example</code>.
                 </span>
               </div>
             )}
